@@ -37,7 +37,6 @@ We query `nvidia-smi --query-compute-apps=pid,used_memory --format=csv`, and use
 > It works by looking up the target process's cgroup metadata in /proc/$PID/cgroup. This metadata contains the names of each cgroup assigned to the process. In the case of Docker containers created using the docker CLI or created by the kubelet, these cgroup names contain the Docker container ID. We can map this container ID to a Kubernetes pod by doing a lookup against the local kubelet API.
 
 
-TODO: Update links
 We [enrich the `used_memory` stat with metadata from the associated Pod](./gpu_watchdog.py#L79-L111), and [publish to Datadog as `kubernetes.gpu.usage`](./gpu_watchdog.py##L44-61).
 
 
