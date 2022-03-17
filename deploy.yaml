@@ -1,0 +1,103 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+
+metadata:
+  name: gpu-watchdog-cluster-role
+
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "services", "pods", "endpoints", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: v1
+kind: ServiceAccount
+
+metadata:
+  name: gpu-watchdog-service-account
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+
+metadata:
+  name: gpu-watchdog-cluster-role-binding
+
+roleRef:
+  kind: ClusterRole
+  name: gpu-watchdog-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+subjects:
+  - kind: ServiceAccount
+    name: gpu-watchdog-service-account
+    namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gpu-watchdog-secrets 
+type: Opaque
+data:
+  DD_API_KEY: "<REDACTED>"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gpu-watchdog-daemonset
+  namespace: default
+  labels:
+    app: gpu-watchdog
+spec:
+  selector:
+    matchLabels:
+      name: gpu-watchdog
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+      labels:
+        name: gpu-watchdog
+    spec:
+      serviceAccount: gpu-watchdog-service-account
+      # REQUIRED to retrieve Pod metadata
+      hostPID: true
+      # Only run on GPU nodes
+      nodeSelector:
+        k8s.amazonaws.com/accelerator: vgpu
+      tolerations:
+      # This toleration is deprecated. Kept here for backward compatibility
+      # See https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: k8s.amazonaws.com/vgpu
+        operator: Exists
+        effect: NoSchedule
+      # Mark this pod as a critical add-on; when enabled, the critical add-on
+      # scheduler reserves resources for critical add-on pods so that they can
+      # be rescheduled after a failure.
+      # See https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
+      priorityClassName: "system-node-critical"
+      containers:
+      - name: gpu-watchdog
+        image: "gpu-watchdog:latest"
+        env:
+        - name: DD_SITE
+          value: "datadoghq.com"
+        - name: DD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gpu-watchdog-secrets
+              key: DD_API_KEY
+        - name: STATSD_PORT
+          value: "8125"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "2m"
+          limits:
+            memory: "250Mi"
+            cpu: "10m"

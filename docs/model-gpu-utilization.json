@@ -1,0 +1,138 @@
+{
+    "title": "Kubeflow Model GPU Utilization",
+    "description": "## Kubeflow Model GPU Utilization\n\nGPU utilization metrics from our cluster\n- gathered via [gpu-watchdog](https://github.com/interosinc/gpu-watchdog)",
+    "widgets": [
+        {
+            "definition": {
+                "title": "kubernetes.gpu.usage",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
+                "time": {},
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "formulas": [
+                            {
+                                "formula": "query1"
+                            }
+                        ],
+                        "queries": [
+                            {
+                                "query": "max:kubernetes.gpu.usage{env:$env.value} by {app}",
+                                "data_source": "metrics",
+                                "name": "query1"
+                            }
+                        ],
+                        "response_format": "timeseries",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "include_zero": true,
+                    "scale": "linear",
+                    "label": "",
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            },
+            "layout": {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 8
+            }
+        },
+        {
+            "definition": {
+                "title": "",
+                "title_size": "16",
+                "title_align": "left",
+                "time": {},
+                "type": "query_table",
+                "requests": [
+                    {
+                        "formulas": [
+                            {
+                                "conditional_formats": [],
+                                "cell_display_mode": "bar",
+                                "formula": "query1",
+                                "limit": {
+                                    "count": 500,
+                                    "order": "desc"
+                                }
+                            },
+                            {
+                                "conditional_formats": [],
+                                "cell_display_mode": "bar",
+                                "formula": "query2"
+                            },
+                            {
+                                "conditional_formats": [],
+                                "cell_display_mode": "bar",
+                                "formula": "query3"
+                            }
+                        ],
+                        "response_format": "scalar",
+                        "queries": [
+                            {
+                                "query": "avg:kubernetes.gpu.usage{$env} by {app}",
+                                "data_source": "metrics",
+                                "name": "query1",
+                                "aggregator": "avg"
+                            },
+                            {
+                                "query": "min:kubernetes.gpu.usage{$env} by {app}",
+                                "data_source": "metrics",
+                                "name": "query2",
+                                "aggregator": "avg"
+                            },
+                            {
+                                "query": "max:kubernetes.gpu.usage{$env} by {app}",
+                                "data_source": "metrics",
+                                "name": "query3",
+                                "aggregator": "avg"
+                            }
+                        ]
+                    }
+                ],
+                "has_search_bar": "auto"
+            },
+            "layout": {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 8
+            }
+        }
+    ],
+    "template_variables": [
+        {
+            "name": "env",
+            "default": "staging",
+            "prefix": "env",
+            "available_values": [
+                "staging",
+                "prod"
+            ]
+        }
+    ],
+    "layout_type": "ordered",
+    "is_read_only": false,
+    "notify_list": [],
+    "reflow_type": "fixed"
+}
