@@ -81,7 +81,7 @@ spec:
       priorityClassName: "system-node-critical"
       containers:
       - name: gpu-watchdog
-        image: "gpu-watchdog:latest"
+        image: "joehaaga/gpu-watchdog:latest"
         env:
         - name: DD_SITE
           value: "datadoghq.com"
